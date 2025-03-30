@@ -30,7 +30,9 @@ connectToDb();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
+app.get("/", (req, res) => {
+  res.send("Welcome to Karate API!");
+});
 app.get("/getimage", (req, res) => {
   const imagePath = path.join(__dirname, "./photo/img/image1.jpg");
   res.sendFile(imagePath);

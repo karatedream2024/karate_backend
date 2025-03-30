@@ -2,6 +2,10 @@ import mongoose from 'mongoose';
 
 // Define the Event schema
 const eventSchema = new mongoose.Schema({
+    eventType:{
+        type: String,
+        required: true,
+    },
     title: {
         type: String,
         required: true
