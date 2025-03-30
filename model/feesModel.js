@@ -27,7 +27,7 @@ const feesSchema = new mongoose.Schema({
             required: true
         },
         fees:[feesSchema]
-    })
+    }, {timestamps: true})
 
     const feesModel = mongoose.model('fees', feedetails);
     export default feesModel

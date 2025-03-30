@@ -1,13 +1,13 @@
 import attendanceModel from "../model/attendenceModel.js";
 
+console.log(Date.now())
 
 const updateAttendances = async (req, res) => {
     console.log(req.body, "range working ")
-
-
-
     try {
         const updatePromises = req.body.map(async ({ studentId, date, status, userId }) => {
+            console.log(studentId, date, status, userId, 'ranking')
+
             const existingRecord = await attendanceModel.findOne({ studentId, "attendance.date": date });
 
             if (existingRecord) {
@@ -15,7 +15,7 @@ const updateAttendances = async (req, res) => {
                 // Update the status of the existing record
                 return attendanceModel.findOneAndUpdate(
                     { studentId, "attendance.date": date },
-                    { $set: { "attendance.$.status": status, "attendance.$.userId": status } },
+                    { $set: { "attendance.$.status": status, "attendance.$.userId": userId } },
                     { new: true }
                 );
             } else {
@@ -52,39 +52,59 @@ const updateAttendances = async (req, res) => {
     }
 };
 
-
 const getattendences = async (req, res) => {
+    console.log(req.body, 'working fine')
     try {
-        const attendances = await attendanceModel.find()
+
+
+        const attendances = await attendanceModel.find({ attendance: { $elemMatch: { date: { $gte: req.body.start, $lt: req.body.end } } } })
             .populate({
                 path: 'studentId',
-                match: { dojo: "firstDojo" },
-                select: [`name`, `grade`, 'dob']
+                match: { dojo: req.body.dojo },
+                select: 'name grade dob',
             })
-            .populate({
-                path: 'attendance.userId', // Populates the userId in the attendance array
-                select: 'name' // Only includes the 'name' field from the user document
-            });
 
-        console.log(attendances, 'attendances');
+            const filteredAttendances = attendances.filter(attendance => attendance.studentId !== null);
+            console.log(filteredAttendances, 'filteredAttendances');
 
-        // Filter out any documents where the studentId didn't match the dojo criteria
-        const filteredAttendances = attendances.filter(attendance => attendance.studentId !== null);
-        console.log(filteredAttendances, 'filteredAttendances');
-
-        res.status(200).json({
-            status: "success",
-            data: filteredAttendances,
-            message: "Student attendance retrieved successfully"
-        });
+        res.json(filteredAttendances);  
     } catch (error) {
-        console.error("Error retrieving student attendance:", error); // Log the error for debugging
-        res.status(500).json({
-            status: "error",
-            message: "Internal server error"
-        });
+        console.error('Error retrieving student attendance:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 };
+// const getattendences = async (req, res) => {
+//     try {
+//         const attendances = await attendanceModel.find()
+//             .populate({
+//                 path: 'studentId',
+//             //     match: { dojo: "firstDojo" },
+//                 select: [`name`, `grade`, 'dob']
+//             })
+//             .populate({
+//                 path: 'attendance._id', // Populates the userId in the attendance array
+//                 select: 'name' // Only includes the 'name' field from the user document
+//             });
+
+//         console.log(attendances, 'attendances');
+
+//         // Filter out any documents where the studentId didn't match the dojo criteria
+//         const filteredAttendances = attendances.filter(attendance => attendance.studentId !== null);
+//         console.log(filteredAttendances, 'filteredAttendances');
+
+//         res.status(200).json({
+//             status: "success",
+//             data: filteredAttendances,
+//             message: "Student attendance retrieved successfully"
+//         });
+//     } catch (error) {
+//         console.error("Error retrieving student attendance:", error); // Log the error for debugging
+//         res.status(500).json({
+//             status: "error",
+//             message: "Internal server error"
+//         });
+//     }
+// };
 
 
 export { updateAttendances, getattendences }

@@ -1,18 +1,24 @@
 import express from 'express';
 import * as dotenv from 'dotenv';
+import cors from 'cors';
 import connectToDb from './dbConnection/connect_db.js';
 import { userRouter } from './routes/userRouter.js';
-import { productRouter } from './routes/productRouter.js';
-import { reviewRouter } from './routes/ReviewRouter.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { cartRouter } from './routes/cartRouter.js';
 import { attendenceRouter } from './routes/attendenceRouter.js';
 import { feeRouter } from './routes/feeRouter.js';
-import { studentdetailRouter } from './routes/studentdetailRouter.js';
+import blogrouter from './routes/blogRouter.js';
+import contactrouter from './routes/contactRouter.js';
+import dojorouter from './routes/dojoRouter.js';
+import eventrouter from './routes/eventRouter.js';
+import studentRouter from './routes/studentRouter.js';
+import registerRouter from './routes/registerRouter.js';
+import tourRouter from './routes/upcomingRouter.js';
 
 
 const app = express();
+app.use(cors());
+
 app.use(express.json());
 
 dotenv.config();
@@ -30,17 +36,16 @@ app.get("/getimage", (req, res) => {
   res.sendFile(imagePath);
 });
 
-
-
-
-
 app.use('/api/user', userRouter)
-app.use('/api/product', productRouter)
-app.use('/api/review', reviewRouter)
-app.use('/api/cart', cartRouter)
 app.use('/api/atten', attendenceRouter)
 app.use('/api/fee', feeRouter)
-app.use('/api/student', studentdetailRouter)
+app.use('/api/blog', blogrouter)
+app.use('/api/contact', contactrouter)
+app.use('/api/dojo', dojorouter)
+app.use('/api/event', eventrouter)
+app.use('/api/student', studentRouter)
+app.use('/api/register', registerRouter)
+app.use('/api/tour', tourRouter)
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

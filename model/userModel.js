@@ -18,14 +18,9 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     userType:{
-        type: Number,
+        type: String,
         required: true,
-        default: 0
     },
-    date: {
-        type: Date,
-        default: Date.now
-    }
 }, { timestamps: true } );
 
 

@@ -5,11 +5,11 @@ const dojoSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    address: {
+    location_link: {
         type: String,
         required: true
     },
-    city: {
+    imageurl: {
         type: String,
         required: true
     },

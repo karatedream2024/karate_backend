@@ -1,75 +1,62 @@
 import feesModel from "../model/feesModel.js";
 
 
+
 const createfees = async (req, res) => {
+    console.log(req.body, 'fees data');
     try {
-        const { fees, studentId} = req.body;
-    //    const studentId = "66b6f928379c3b9b9dce7efe"
-    //     const fees = 400
+        const { amount, date, payment_type, studentId } = req.body;
 
-        const amount = fees.amount;
-        const date = fees.date;
-        const payment_type = fees.payment_type;
-        const userId = fees.userId
+     const   userId = "66e29193fd7f524fb187a01c"
 
-
-        const replacefee = await feesModel.findOne({
-            _id: "66b0bd1a1b9042e8e4b90a3e",
-            fees: { $elemMatch: { _id: "66b0bd1a1b9042e8e4b90a3f" } }
-        });
-
-        console.log(replacefee, 'range offer');
-
-        if (replacefee) {
-            const updatefee = await feesModel.findOneAndUpdate(
-                { _id: "66b0bd1a1b9042e8e4b90a3e", "fees._id": "66b0bd1a1b9042e8e4b90a3f" },
-                { $set: { "fees.$.amount": 300, "fees.$.userId": userId  } },
-                { new: true }
-            );
-            return res.status(200).json({ status: "success", data: updatefee, message: "Fees Updated Successfully" });
+        if (!amount || !date || !payment_type || !studentId || !userId) {
+            return res.status(400).json({ status: "error", message: "Missing required fields" });
         }
 
         const feesData = await feesModel.findOne({ studentId });
 
-        if (!feesData) {
-            const createfees = new feesModel({
-                studentId,
-                fees,
-                date,
-                payment_type,
-                userId
-            })
-            const result = await createfees.save();
-            res.status(200).json({ status: "success", data: createfees, message: "Attendances Updated Successfully" });
-        }
-        else {
-            const updatefee = await feesModel.findOneAndUpdate({ studentId: studentId }, { $push: { fees: fees } }, { new: true })
-            res.status(200).json({ status: "success", data: updatefee, message: "Attendances Updated Successfully" });
-        }
-    }
-    catch (error) {
-        res.status(500).json(error);
-    }
+        if (feesData) {
+            const feeExists = feesData.fees.some(fee => fee._id.toString() === req.body.feeId);
 
-}
+            if (feeExists) {
+                const updatedFeesData = await feesModel.findOneAndUpdate(
+                    { studentId, "fees._id": req.body.feeId },
+                    { $set: { "fees.$.amount": amount, "fees.$.date": date, "fees.$.payment_type": payment_type, "fees.$.userId": userId } },
+                    { new: true }
+                );
+                return res.status(200).json({ status: "success", data: updatedFeesData, message: "Fees Updated Successfully" });
+            } else {
+                feesData.fees.push({ amount, date, payment_type, userId });
+                const updatedFeesData = await feesData.save();
+                return res.status(200).json({ status: "success", data: updatedFeesData, message: "Fee Added Successfully" });
+            }
+        } else {
+            const newFees = new feesModel({
+                studentId,
+                fees: [{ amount, date, payment_type, userId }]
+            });
+            const result = await newFees.save();
+            return res.status(201).json({ status: "success", data: result, message: "Fees Created Successfully" });
+        }
+    } catch (error) {
+        console.error("Error creating/updating fees:", error);
+        res.status(500).json({ status: "error", message: "Internal Server Error" });
+    }
+};
 
 const getfees = async (req, res) => {
+    console.log(req.body, 'lake pf fsaldjdals')   
     try {
-        const attendances = await feesModel.find()
+        const atten = await feesModel.find({ studentId: req.body.studentId })
             .populate({
                 path: 'studentId',
-                match: { dojo: "firstDojo" },
                 select: [`name`, `grade`, 'dob', 'fatherName']
             }).populate({
-                path: 'fees.userId', // Populates the userId in the attendance array
-                select: 'name' // Only includes the 'name' field from the user document
+                path: 'fees.userId', 
+                select: 'name' 
             });
 
-        console.log(attendances, 'attendances');
-
-        // Filter out any documents where the studentId didn't match the dojo criteria
-        // const filteredAttendances = attendances.filter(attendance => attendance.studentId !== null);
-        // console.log(filteredAttendances, 'workmode')
+            const attendances = atten.reverse();
 
         res.status(200).json({
             status: "success",
@@ -85,17 +72,42 @@ const getfees = async (req, res) => {
     }
 };
 
-// const getfees = async (req, res) => {
-//     try {
-//         const { studentId } = req.body;
-//         const feesData = await feesModel.findOne({ studentId });
-//         res.status(200).json({ status: "success", data: feesData, message: "Attendances Updated Successfully" });
-//     } catch (error) {
 
-//         res.status(500).json("server Internal Error");
-//     }
+const deleteFee = async (req, res) => {
+    console.log(req.body, 'delete fee data');
+    console.log(req.params, 'delete fee data');
+    try {
+        const { id, studentId} = req.params;
+        const feeId = id;
 
-// }
+        if (!studentId || !feeId) {
+            return res.status(400).json({ status: "error", message: "Missing required fields" });
+        }
+
+        // Find the student's fee record
+        const feesData = await feesModel.findOne({ studentId });
+
+        if (!feesData) {
+            return res.status(404).json({ status: "error", message: "Student not found" });
+        }
+
+        // Find and remove the specific fee from the student's fee record
+        const updatedFeesData = await feesModel.findOneAndUpdate(
+            { studentId },
+            { $pull: { fees: { _id: feeId } } }, // Remove the fee with the given feeId
+            { new: true }
+        );
+
+        if (!updatedFeesData) {
+            return res.status(404).json({ status: "error", message: "Fee not found" });
+        }
+
+        res.status(200).json({ status: "success", data: updatedFeesData, message: "Fee Deleted Successfully" });
+    } catch (error) {
+        console.error("Error deleting fee:", error);
+        res.status(500).json({ status: "error", message: "Internal Server Error" });
+    }
+};
 
 
-export { createfees, getfees }
+export { createfees, getfees, deleteFee }
