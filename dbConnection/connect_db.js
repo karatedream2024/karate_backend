@@ -15,7 +15,7 @@ async function connectToDb() {
     try {
         await mongoose.connect(MONGO_URI);
         console.log('====================================');
-        console.log("MongoDB is Conncted");
+        console.log("MongoDB is Conncted new");
         // return test.init();
         console.log('====================================');
 
