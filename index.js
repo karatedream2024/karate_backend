@@ -19,7 +19,14 @@ import tourRouter from './routes/upcomingRouter.js';
 const app = express();
 app.use(cors());
 
-app.use(express.json());
+app.use(express.json(
+  {
+    // origin: 'https://your-frontend-domain.onrender.com',
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}
+));
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
